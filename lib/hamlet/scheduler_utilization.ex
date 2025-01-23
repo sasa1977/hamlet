@@ -6,14 +6,16 @@ defmodule Hamlet.SchedulerUtilization do
 
   @impl GenServer
   def init(_arg) do
+    :erlang.system_flag(:scheduler_wall_time, true)
     schedule_next_sample()
-    {:ok, nil}
+    {:ok, sample: :scheduler.get_sample()}
   end
 
   @impl GenServer
   def handle_info(:sample, state) do
+    new_sample = :scheduler.get_sample()
     schedule_next_sample()
-    {:noreply, state}
+    {:noreply, %{state | sample: new_sample}}
   end
 
   defp schedule_next_sample,
