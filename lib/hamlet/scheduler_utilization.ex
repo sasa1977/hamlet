@@ -4,12 +4,19 @@ defmodule Hamlet.SchedulerUtilization do
   def start_link(arg),
     do: GenServer.start_link(__MODULE__, arg)
 
+  def average(pid),
+    do: GenServer.call(pid, :average)
+
   @impl GenServer
   def init(_arg) do
     :erlang.system_flag(:scheduler_wall_time, true)
     schedule_next_sample()
     {:ok, %{sample: :scheduler.get_sample(), average_utilization: 0.0}}
   end
+
+  @impl GenServer
+  def handle_call(:average, _from, state),
+    do: {:reply, state.average_utilization, state}
 
   @impl GenServer
   def handle_info(:sample, state) do
