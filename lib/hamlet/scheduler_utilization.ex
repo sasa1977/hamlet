@@ -9,10 +9,11 @@ defmodule Hamlet.SchedulerUtilization do
     do: GenServer.call(name, :average)
 
   @impl GenServer
-  def init(_opts) do
+  def init(opts) do
     :erlang.system_flag(:scheduler_wall_time, true)
-    schedule_next_sample()
-    {:ok, %{sample: :scheduler.get_sample(), average_utilization: 0.0}}
+    interval = Keyword.get(opts, :interval, :timer.seconds(1))
+    schedule_next_sample(interval)
+    {:ok, %{interval: interval, sample: :scheduler.get_sample(), average_utilization: 0.0}}
   end
 
   @impl GenServer
@@ -22,7 +23,7 @@ defmodule Hamlet.SchedulerUtilization do
   @impl GenServer
   def handle_info(:sample, state) do
     new_sample = :scheduler.get_sample()
-    schedule_next_sample()
+    schedule_next_sample(state.interval)
     {:noreply, %{state | average_utilization: average_utilization(state.sample, new_sample)}}
   end
 
@@ -49,6 +50,6 @@ defmodule Hamlet.SchedulerUtilization do
     Enum.sum(online_utilizations) / length(online_utilizations)
   end
 
-  defp schedule_next_sample,
-    do: Process.send_after(self(), :sample, :timer.seconds(1))
+  defp schedule_next_sample(:infinity), do: :ok
+  defp schedule_next_sample(interval), do: Process.send_after(self(), :sample, interval)
 end
