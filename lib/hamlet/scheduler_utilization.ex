@@ -1,14 +1,15 @@
 defmodule Hamlet.SchedulerUtilization do
   use GenServer
 
-  def start_link(arg),
-    do: GenServer.start_link(__MODULE__, arg, name: __MODULE__)
+  def start_link(opts),
+    # name is configurable to support testing
+    do: GenServer.start_link(__MODULE__, opts, name: Keyword.get(opts, :name, __MODULE__))
 
-  def average,
-    do: GenServer.call(__MODULE__, :average)
+  def average(name \\ __MODULE__),
+    do: GenServer.call(name, :average)
 
   @impl GenServer
-  def init(_arg) do
+  def init(_opts) do
     :erlang.system_flag(:scheduler_wall_time, true)
     schedule_next_sample()
     {:ok, %{sample: :scheduler.get_sample(), average_utilization: 0.0}}
