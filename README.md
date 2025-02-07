@@ -1,3 +1,3 @@
-# MyApp
+# Hamlet
 
 **TODO: Add description**
