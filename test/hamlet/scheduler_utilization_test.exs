@@ -33,6 +33,12 @@ defmodule Hamlet.SchedulerUtilizationTest do
       # 0.2 is the average of online scheduler utilizations
       assert SchedulerUtilization.average(server.name) == 0.2
     end
+
+    test "works on the registered server" do
+      send(SchedulerUtilization, :sample)
+      average = SchedulerUtilization.average()
+      assert average >= 0.0 and average <= 1.0
+    end
   end
 
   defp start_server(opts \\ []) do
