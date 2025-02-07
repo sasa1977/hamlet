@@ -1,9 +1,9 @@
-defmodule MyApp.MixProject do
+defmodule Hamlet.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :my_app,
+      app: :hamlet,
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
@@ -14,7 +14,7 @@ defmodule MyApp.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {MyApp.Application, []}
+      mod: {Hamlet.Application, []}
     ]
   end
 
