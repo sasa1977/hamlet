@@ -9,12 +9,12 @@ defmodule Hamlet.SchedulerUtilizationTest do
     end
 
     test "periodically takes new sample" do
-      server = start_server(initial_sample: [{:normal, 0, 0, 0}, {:cpu, 1, 0, 0}])
+      {sample1, sample2} = samples(normal: 10, cpu: 30)
+      server = start_server(initial_sample: sample1)
 
-      # generates the sample which represents scheduler utilizations of 10% and 30%
-      sample(server, [{:normal, 0, 10, 100}, {:cpu, 1, 30, 100}])
+      sample(server, sample2)
 
-      # 0.2 is the average of scheduler utilizations
+      # 0.2 is the average of scheduler utilizations (10% and 30%)
       assert SchedulerUtilization.average(server.name) == 0.2
     end
   end
@@ -33,5 +33,22 @@ defmodule Hamlet.SchedulerUtilizationTest do
   defp sample(server, sample) do
     Agent.update(server.sample_storage, fn _ -> sample end)
     send(server.name, :sample)
+  end
+
+  # Given the list of expected utilizations, generate the two samples, which,
+  # when passed to `:scheduler.utilization/2` will result in the desired
+  # utilizations.
+  @spec samples([{:normal | :cpu, utilization_percentage :: non_neg_integer()}]) ::
+          {sample1 :: list(), sample2: list()}
+  defp samples(schedulers) do
+    schedulers
+    |> Enum.with_index(1)
+    |> Enum.map(fn {{type, utilization}, id} ->
+      {
+        {type, id, 0, 0},
+        {type, id, utilization, 100}
+      }
+    end)
+    |> Enum.unzip()
   end
 end
