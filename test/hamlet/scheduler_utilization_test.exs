@@ -9,9 +9,13 @@ defmodule Hamlet.SchedulerUtilizationTest do
     end
 
     test "periodically takes new sample" do
-      server = start_server()
-      sample(server)
-      assert SchedulerUtilization.average(name) > 0.0
+      server = start_server(initial_sample: [{:normal, 0, 0, 0}, {:cpu, 1, 0, 0}])
+
+      # generates the sample which represents scheduler utilizations of 10% and 30%
+      sample(server, [{:normal, 0, 10, 100}, {:cpu, 1, 30, 100}])
+
+      # 0.2 is the average of scheduler utilizations
+      assert SchedulerUtilization.average(server.name) == 0.2
     end
   end
 
