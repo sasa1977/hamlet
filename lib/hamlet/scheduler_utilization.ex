@@ -14,9 +14,17 @@ defmodule Hamlet.SchedulerUtilization do
 
     interval = Keyword.get(opts, :interval, :timer.seconds(1))
     sampler = Keyword.get(opts, :sampler, &:scheduler.get_sample/0)
+
     schedule_next_sample(interval)
 
-    {:ok, %{interval: interval, sampler: sampler, sample: sampler.(), average_utilization: 0.0}}
+    {:ok,
+     %{
+       interval: interval,
+       sampler: sampler,
+       sample: sampler.(),
+       system_info: Keyword.get(opts, :system_info, &:erlang.system_info/1),
+       average_utilization: 0.0
+     }}
   end
 
   @impl GenServer
@@ -27,10 +35,11 @@ defmodule Hamlet.SchedulerUtilization do
   def handle_info(:sample, state) do
     new_sample = state.sampler.()
     schedule_next_sample(state.interval)
-    {:noreply, %{state | average_utilization: average_utilization(state.sample, new_sample)}}
+    average = average_utilization(state.sample, new_sample, state.system_info)
+    {:noreply, %{state | average_utilization: average}}
   end
 
-  defp average_utilization(sample1, sample2) do
+  defp average_utilization(sample1, sample2, system_info) do
     utilizations = :scheduler.utilization(sample1, sample2)
 
     # The result of `:scheduler.utilization/2` contains the average of all schedulers (in the tuple
@@ -47,8 +56,8 @@ defmodule Hamlet.SchedulerUtilization do
           do: utilization
 
     online_utilizations =
-      Enum.take(normal_utilizations, :erlang.system_info(:schedulers_online)) ++
-        Enum.take(dirty_cpu_utilizations, :erlang.system_info(:dirty_cpu_schedulers_online))
+      Enum.take(normal_utilizations, system_info.(:schedulers_online)) ++
+        Enum.take(dirty_cpu_utilizations, system_info.(:dirty_cpu_schedulers_online))
 
     Enum.sum(online_utilizations) / length(online_utilizations)
   end

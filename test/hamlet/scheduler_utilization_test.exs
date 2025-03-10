@@ -26,7 +26,14 @@ defmodule Hamlet.SchedulerUtilizationTest do
     sample_storage = start_supervised!({Agent, fn -> initial_sample end})
     sampler = fn -> {:scheduler_wall_time, Agent.get(sample_storage, & &1)} end
 
-    start_supervised!({SchedulerUtilization, name: name, interval: :infinity, sampler: sampler})
+    start_supervised!(
+      {SchedulerUtilization,
+       name: name,
+       interval: :infinity,
+       sampler: sampler,
+       system_info: &Keyword.get(opts, &1, :erlang.system_info(&1))}
+    )
+
     %{name: name, sample_storage: sample_storage}
   end
 
