@@ -17,6 +17,22 @@ defmodule Hamlet.SchedulerUtilizationTest do
       # 0.2 is the average of scheduler utilizations (10% and 30%)
       assert SchedulerUtilization.average(server.name) == 0.2
     end
+
+    test "considers only online schedulers" do
+      {sample1, sample2} = samples(normal: 10, normal: 20, cpu: 30, cpu: 40)
+
+      server =
+        start_server(
+          initial_sample: sample1,
+          schedulers_online: 1,
+          dirty_cpu_schedulers_online: 1
+        )
+
+      sample(server, sample2)
+
+      # 0.2 is the average of online scheduler utilizations
+      assert SchedulerUtilization.average(server.name) == 0.2
+    end
   end
 
   defp start_server(opts \\ []) do
