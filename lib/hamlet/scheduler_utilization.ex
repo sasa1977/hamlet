@@ -2,10 +2,10 @@ defmodule Hamlet.SchedulerUtilization do
   use GenServer
 
   def start_link(arg),
-    do: GenServer.start_link(__MODULE__, arg)
+    do: GenServer.start_link(__MODULE__, arg, name: __MODULE__)
 
-  def average(pid),
-    do: GenServer.call(pid, :average)
+  def average,
+    do: GenServer.call(__MODULE__, :average)
 
   @impl GenServer
   def init(_arg) do

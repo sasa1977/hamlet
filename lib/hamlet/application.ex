@@ -3,7 +3,7 @@ defmodule Hamlet.Application do
 
   @impl Application
   def start(_type, _args) do
-    children = []
+    children = [Hamlet.SchedulerUtilization]
     opts = [strategy: :one_for_one, name: Hamlet.Supervisor]
     Supervisor.start_link(children, opts)
   end
